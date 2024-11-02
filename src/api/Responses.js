@@ -37,3 +37,16 @@ export const deleteWorker = async (id) => {
     const response = await axios.delete(`${BASE_URL}/workers/${id}`);
     return response.data
 };
+
+
+// src/api/Responses.js
+export const fetchEmployeeCountByDate = async (date) => {
+    const response = await axios.get(`${BASE_URL}/workers/statistics?startDate=${date}`);
+    return response.data; // Assuming this returns just a number
+};
+
+
+export const fetchSalaries = async (date) => {
+    const response = await axios.get(`${BASE_URL}/workers/salaries`);
+    return response.data; // Assuming this returns just a number
+};

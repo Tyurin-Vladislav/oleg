@@ -13,7 +13,7 @@ import {
     Typography
 } from "@mui/material";
 import EmployeeCard from "../components/EmployeeCard";
-import {fetchWorkers} from "../api/Responses";
+import {fetchEmployeeCountByDate, fetchSalaries, fetchWorkers} from "../api/Responses";
 import {toast, ToastContainer} from "react-toastify";
 
 function AllEmployeesPage() {
@@ -24,6 +24,9 @@ function AllEmployeesPage() {
     const [filterSalary, setFilterSalary] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [dateInput, setDateInput] = useState('');
+    const [employeeCount, setEmployeeCount] = useState(0);
+    const [salaries, setSalaries] = useState([]);
 
     // Memoize the loadWorkers function with useCallback
     const loadWorkers = useCallback(async () => {
@@ -43,7 +46,36 @@ function AllEmployeesPage() {
     // Call loadWorkers in useEffect
     useEffect(() => {
         loadWorkers();
+        loadSalaries();
     }, [loadWorkers]);
+
+
+    const handleDateCount = async () => {
+        try {
+            // Parse the input date (assumed to be in YYYY-MM-DD format)
+            const [year, month, day] = dateInput.split('-');
+            // Format it to DD.MM.YY
+            const formattedDate = `${day}.${month}.${year}`; // Get last 2 digits of the year
+            const count = await fetchEmployeeCountByDate(formattedDate);
+            setEmployeeCount(count);
+            toast.success(`Количество сотрудников на ${formattedDate}: ${count}`);
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || 'Ошибка получения количества сотрудников';
+            toast.error(errorMessage);
+        }
+    };
+
+    // Function to fetch salaries
+    const loadSalaries = useCallback(async () => {
+        try {
+            const salaryData = await fetchSalaries(); // Assume this fetches the salaries
+            setSalaries(salaryData);
+            toast.success('Зарплаты успешно получены');
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || 'Ошибка получения зарплат';
+            toast.error(errorMessage);
+        }
+    }, []);
 
     return (
         <Box sx={{padding: 10}}>
@@ -91,6 +123,35 @@ function AllEmployeesPage() {
             <Button variant="contained" onClick={loadWorkers} sx={{marginBottom: 2}}>
                 Найти
             </Button>
+
+            {/* Date count section */}
+            <Typography variant="h6" sx={{marginTop: 4}}>Проверить количество сотрудников по дате</Typography>
+            <TextField
+                label="Date (YYYY-MM-DD)"
+                type="date"
+                value={dateInput}
+                onChange={(e) => setDateInput(e.target.value)}
+                InputLabelProps={{shrink: true}}
+                fullWidth
+                margin="normal"
+            />
+            <Button variant="contained" onClick={handleDateCount} sx={{marginTop: 2}}>
+                Получить количество
+            </Button>
+
+            <Box sx={{marginTop: 4}}>
+                <Typography variant="h6">Список зарплат:</Typography>
+                {salaries.length > 0 ? (
+                    <ul>
+                        {salaries.map((salary, index) => (
+                            <li key={index}>{salary}</li>
+                        ))}
+                    </ul>
+                ) : (
+                    <Typography>Зарплаты не найдены</Typography>
+                )}
+            </Box>
+
 
             {loading ? (
                 <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh'}}>
